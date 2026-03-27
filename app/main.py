@@ -1,0 +1,183 @@
+from fastapi import FastAPI, HTTPException, status, Depends, Response
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import time
+from pydantic import BaseModel, HttpUrl
+from . import models
+from sqlalchemy.orm import Session
+from .database import engine, get_db
+
+
+#define request body  schema
+class Course(BaseModel):
+    name: str
+    instructor: str
+    duration: float
+    website: HttpUrl
+   # website: HttpUrl
+
+
+    
+
+
+while True:
+    try:
+        conn = psycopg2.connect(
+            host = 'localhost',
+            database = 'postgres',
+            user = 'postgres',
+            password = '1009',
+            cursor_factory= RealDictCursor
+        )
+        cursor = conn.cursor()
+        print('Database connected successfully')
+        break
+    except Exception as e:
+        print('Error connecting to databse:',e)
+        time.sleep(2)
+
+app = FastAPI()
+
+models.Base.metadata.create_all(bind=engine)
+
+@app.get("/course")
+def get_courses():
+    cursor.execute("SELECT * FROM course;")
+    courses = cursor.fetchall()  # list of dicts
+    return {"courses": courses}
+
+#get course data using sqlalchemy
+@app.get('/coursealchemy')
+def course(db:Session = Depends(get_db)):
+    course = db.query(models.Course).all()
+    return {
+        'status' : 'sqlalchemy orm working',
+        'Course': course
+        }
+
+
+@app.post("/post")
+def add_new_post(post: Course):
+    cursor.execute("""INSERT INTO course(name, instructor, duration) VALUES(%s, %s, %s) RETURNING*""" ,(post.name, post.instructor, post.duration))
+    new_post = cursor.fetchone()
+    conn.commit()
+    return{'data':post}
+
+#add new course using sqlalchemy
+@app.post('/course/create')
+def create_course(course:Course, db: Session = Depends(get_db)):
+    new_course = models.Course(
+        name = course.name,
+        instructor = course.instructor,
+        duration = course.duration,
+        website = str(course.website)
+    )
+
+    db.add(new_course)
+    db.commit()
+    db.refresh(new_course)
+    return {
+        'status': "success",
+        'message': 'Course created successfully',
+        'course':new_course}
+
+
+# @app.get("/course/{id}")
+# def get_course_by_id(id:int):
+#     cursor.execute("""SELECT * FROM course WHERE id = %s""", (str(id)))
+#     course = cursor.fetchone()
+#     if not course:
+#         raise HTTPException(
+#             status_code= status.HTTP_404_NOT_FOUND,
+#             detail= f"Course with id:{id} was not found"
+#         )
+#     return {"course_ddetail": course}
+
+#get course data by id using sqlalchemy
+@app.get("/course/{id}")
+def get_course_by_id(id:int, db:Session = Depends(get_db)):
+    course = db.query(models.Course).filter(models.Course.id == id).first()
+    if not course:
+        raise HTTPException(
+            status_code= status.HTTP_404_NOT_FOUND,
+            detail= f"Course with id:{id} was not found"
+        )
+    return {"course_ddetail": course}
+
+
+@app.delete("/course/delete/{id}") #status_code= status.HTTP_204_NO_CONTENT)
+def delete_course_by_id(id:int):
+    cursor.execute("""DELETE FROM course WHERE id = %s RETURNING * """, ((str(id))))
+    deleted_course = cursor.fetchone()
+    conn.commit()
+    if not deleted_course:
+        raise HTTPException(
+            status_code= status.HTTP_404_NOT_FOUND,
+            detail= f"Course with id:{id} does not exist"
+        )
+    return {
+        "message": "course deleted successfully"
+    }
+
+
+@app.put("/course/update/{id}", status_code=status.HTTP_200_OK)
+def update_course_by_id(id: int, course: Course ):
+
+    #check if course exist
+    cursor.execute("SELECT 1 FROM course WHERE id = %s",(id,))
+    if cursor.fetchone() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Course with id:{id} doesn't exist "
+        )
+    
+    #update course
+    cursor.execute(
+        """UPDATE course SET name=%s, instructor=%s, duration=%s WHERE id=%s RETURNING * """,(course.name, course.instructor, course.duration,id)
+    )
+    conn.commit()
+    
+    return {
+        "message":"course updated successfully",
+        "course_id": id
+    }
+
+
+
+
+    
+
+# @app.put("/course/update/{id}", status_code=status.HTTP_200_OK)
+# def update_course_by_id(id: int, course: UpdateCourse):
+
+#     # check if course exists
+#     cursor.execute(
+#         "SELECT 1 FROM course WHERE id = %s",
+#         (id,)
+#     )
+#     if cursor.fetchone() is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail=f"Course with id:{id} doesn't exist"
+#         )
+
+#     # update course
+#     cursor.execute(
+#         """
+#         UPDATE course
+#         SET name = %s,
+#             instructor = %s,
+#             duration = %s
+#         WHERE id = %s
+#         """,
+#         (course.name, course.instructor, course.duration, id)
+#     )
+
+#     conn.commit()
+
+#     return {
+#         "message": "course updated successfully",
+#         "course_id": id
+#     }
+
+
