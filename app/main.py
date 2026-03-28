@@ -2,10 +2,10 @@ from fastapi import FastAPI, HTTPException, status, Depends, Response
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
-from pydantic import BaseModel, HttpUrl
 from . import models, schemas 
 from sqlalchemy.orm import Session
 from .database import engine, get_db
+from typing import Any
 
 
 # #define request body  schema
@@ -40,20 +40,17 @@ app = FastAPI()
 
 models.Base.metadata.create_all(bind=engine)
 
-@app.get("/course")
-def get_courses():
-    cursor.execute("SELECT * FROM course;")
-    courses = cursor.fetchall()  # list of dicts
-    return {"courses": courses}
+# @app.get("/course")
+# def get_courses():
+#     cursor.execute("SELECT * FROM course;")
+#     courses = cursor.fetchall()  # list of dicts
+#     return {"courses": courses}
 
 #get course data using sqlalchemy
-@app.get('/coursealchemy')
-def course(db:Session = Depends(get_db)):
+@app.get('/coursealchemy', response_model=list[schemas.CourseResponse])
+def course(db:Session = Depends(get_db)) :
     course = db.query(models.Course).all()
-    return {
-        'status' : 'sqlalchemy orm working',
-        'Course': course
-        }
+    return course
 
 
 # @app.post("/post")
@@ -66,16 +63,14 @@ def course(db:Session = Depends(get_db)):
 #add new course using sqlalchemy
 @app.post('/course/create', response_model= schemas.CourseResponse)
 def create_course(course:schemas.Course, db: Session = Depends(get_db)):
-    new_course = models.Course(**course.model_dump()    )
+    course_data = course.model_dump()
+    course_data['website']=str(course_data['website'])
+    new_course = models.Course(**course_data)
 
     db.add(new_course)
     db.commit()
     db.refresh(new_course)
-    return {
-        'status': "success",
-        'message': 'Course created successfully',
-        'course':new_course}
-
+    return new_course
 
 # @app.get("/course/{id}")
 # def get_course_by_id(id:int):
@@ -89,7 +84,7 @@ def create_course(course:schemas.Course, db: Session = Depends(get_db)):
 #     return {"course_ddetail": course}
 
 #get course data by id using sqlalchemy
-@app.get("/course/{id}")
+@app.get("/course/{id}", response_model=schemas.CourseResponse)
 def get_course_by_id(id:int, db:Session = Depends(get_db)):
     course = db.query(models.Course).filter(models.Course.id == id).first()
     if not course:
@@ -97,7 +92,7 @@ def get_course_by_id(id:int, db:Session = Depends(get_db)):
             status_code= status.HTTP_404_NOT_FOUND,
             detail= f"Course with id:{id} was not found"
         )
-    return {"course_ddetail": course}
+    return course
 
 
 # @app.delete("/course/delete/{id}") #status_code= status.HTTP_204_NO_CONTENT)

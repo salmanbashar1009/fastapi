@@ -11,6 +11,7 @@ class Course(BaseModel):
 
 class CourseResponse(Course):
     name: str
+    id:int
     instructor: str
     duration: float
     website: HttpUrl
