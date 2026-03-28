@@ -105,19 +105,36 @@ def get_course_by_id(id:int, db:Session = Depends(get_db)):
     return {"course_ddetail": course}
 
 
-@app.delete("/course/delete/{id}") #status_code= status.HTTP_204_NO_CONTENT)
-def delete_course_by_id(id:int):
-    cursor.execute("""DELETE FROM course WHERE id = %s RETURNING * """, ((str(id))))
-    deleted_course = cursor.fetchone()
-    conn.commit()
-    if not deleted_course:
+# @app.delete("/course/delete/{id}") #status_code= status.HTTP_204_NO_CONTENT)
+# def delete_course_by_id(id:int):
+#     cursor.execute("""DELETE FROM course WHERE id = %s RETURNING * """, ((str(id))))
+#     deleted_course = cursor.fetchone()
+#     conn.commit()
+#     if not deleted_course:
+#         raise HTTPException(
+#             status_code= status.HTTP_404_NOT_FOUND,
+#             detail= f"Course with id:{id} does not exist"
+#         )
+#     return {
+#         "message": "course deleted successfully"
+#     }
+
+# delete course item using sqlalchemy
+@app.delete("/course/delete/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_course(id:int, db:Session = Depends(get_db)):
+    course = db.query(models.Course).filter(models.Course.id == id).first()
+    if not course:
         raise HTTPException(
-            status_code= status.HTTP_404_NOT_FOUND,
-            detail= f"Course with id:{id} does not exist"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail= f'course with id:{id} not exist'
         )
+    db.delete(course )
+    db.commit()
     return {
-        "message": "course deleted successfully"
+        'status' : 'success',
+        'message': f'course with id:{id}deleted successfully'
     }
+    
 
 # @app.put("/course/update/{id}", status_code=status.HTTP_200_OK)
 # def update_course_by_id(id: int, course: Course ):
