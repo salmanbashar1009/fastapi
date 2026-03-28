@@ -119,30 +119,48 @@ def delete_course_by_id(id:int):
         "message": "course deleted successfully"
     }
 
+# @app.put("/course/update/{id}", status_code=status.HTTP_200_OK)
+# def update_course_by_id(id: int, course: Course ):
 
-@app.put("/course/update/{id}", status_code=status.HTTP_200_OK)
-def update_course_by_id(id: int, course: Course ):
+#     #check if course exist
+#     cursor.execute("SELECT 1 FROM course WHERE id = %s",(id,))
+#     if cursor.fetchone() is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail=f"Course with id:{id} doesn't exist "
+#         )
+    
+#     #update course
+#     cursor.execute(
+#         """UPDATE course SET name=%s, instructor=%s, duration=%s WHERE id=%s RETURNING * """,(course.name, course.instructor, course.duration,id)
+#     )
+#     conn.commit()
+    
+#     return {
+#         "message":"course updated successfully",
+#         "course_id": id
+#     }
 
-    #check if course exist
-    cursor.execute("SELECT 1 FROM course WHERE id = %s",(id,))
-    if cursor.fetchone() is None:
+# update course using sqlalchemy
+@app.put("/course/update/{id}")
+def update_course(id:int, updated_course:Course, db:Session=Depends(get_db)):
+    course_query = db.query(models.Course).filter(models.Course.id == id)
+    course = course_query.first()
+    if not course:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Course with id:{id} doesn't exist "
+            status_code= status.HTTP_404_NOT_FOUND,
+            detail= f"course with id:{id} not found"
         )
-    
-    #update course
-    cursor.execute(
-        """UPDATE course SET name=%s, instructor=%s, duration=%s WHERE id=%s RETURNING * """,(course.name, course.instructor, course.duration,id)
-    )
-    conn.commit()
-    
+    update_data = updated_course.model_dump(exclude_unset=True)
+    update_data['website'] = str(update_data['website'])
+    course_query.update(update_data, synchronize_session=False)
+    db.commit()
+    db.refresh(course)
     return {
-        "message":"course updated successfully",
-        "course_id": id
+        'status' : 'Success',
+        'message' : f'course with id:{id} updated successfully',
+        'course_details': course
     }
-
-
 
 
     
