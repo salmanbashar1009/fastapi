@@ -3,18 +3,18 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from pydantic import BaseModel, HttpUrl
-from . import models
+from . import models, schemas 
 from sqlalchemy.orm import Session
 from .database import engine, get_db
 
 
-#define request body  schema
-class Course(BaseModel):
-    name: str
-    instructor: str
-    duration: float
-    website: HttpUrl
-   # website: HttpUrl
+# #define request body  schema
+# class Course(BaseModel):
+#     name: str
+#     instructor: str
+#     duration: float
+#     website: HttpUrl
+#    # website: HttpUrl
 
 
     
@@ -56,22 +56,17 @@ def course(db:Session = Depends(get_db)):
         }
 
 
-@app.post("/post")
-def add_new_post(post: Course):
-    cursor.execute("""INSERT INTO course(name, instructor, duration) VALUES(%s, %s, %s) RETURNING*""" ,(post.name, post.instructor, post.duration))
-    new_post = cursor.fetchone()
-    conn.commit()
-    return{'data':post}
+# @app.post("/post")
+# def add_new_post(post: schemas.Course):
+#     cursor.execute("""INSERT INTO course(name, instructor, duration) VALUES(%s, %s, %s) RETURNING*""" ,(post.name, post.instructor, post.duration))
+#     new_post = cursor.fetchone()
+#     conn.commit()
+#     return{'data':post}
 
 #add new course using sqlalchemy
-@app.post('/course/create')
-def create_course(course:Course, db: Session = Depends(get_db)):
-    new_course = models.Course(
-        name = course.name,
-        instructor = course.instructor,
-        duration = course.duration,
-        website = str(course.website)
-    )
+@app.post('/course/create', response_model= schemas.CourseResponse)
+def create_course(course:schemas.Course, db: Session = Depends(get_db)):
+    new_course = models.Course(**course.model_dump()    )
 
     db.add(new_course)
     db.commit()
@@ -160,7 +155,7 @@ def delete_course(id:int, db:Session = Depends(get_db)):
 
 # update course using sqlalchemy
 @app.put("/course/update/{id}")
-def update_course(id:int, updated_course:Course, db:Session=Depends(get_db)):
+def update_course(id:int, updated_course:schemas.Course, db:Session=Depends(get_db)):
     course_query = db.query(models.Course).filter(models.Course.id == id)
     course = course_query.first()
     if not course:

@@ -8,3 +8,13 @@ class Course(BaseModel):
     instructor: str
     duration: float
     website: HttpUrl
+
+class CourseResponse(Course):
+    name: str
+    instructor: str
+    duration: float
+    website: HttpUrl
+
+    class Config:
+        from_attributes = True
+        
