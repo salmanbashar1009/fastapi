@@ -20,21 +20,21 @@ from typing import Any
     
 
 
-while True:
-    try:
-        conn = psycopg2.connect(
-            host = 'localhost',
-            database = 'postgres',
-            user = 'postgres',
-            password = '1009',
-            cursor_factory= RealDictCursor
-        )
-        cursor = conn.cursor()
-        print('Database connected successfully')
-        break
-    except Exception as e:
-        print('Error connecting to databse:',e)
-        time.sleep(2)
+# while True:
+#     try:
+#         conn = psycopg2.connect(
+#             host = 'localhost',
+#             database = 'postgres',
+#             user = 'postgres',
+#             password = '1009',
+#             cursor_factory= RealDictCursor
+#         )
+#         cursor = conn.cursor()
+#         print('Database connected successfully')
+#         break
+#     except Exception as e:
+#         print('Error connecting to databse:',e)
+#         time.sleep(2)
 
 app = FastAPI()
 
