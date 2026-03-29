@@ -1,5 +1,5 @@
 
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, EmailStr
 
 
 #define request body  schema
@@ -18,4 +18,10 @@ class CourseResponse(Course):
 
     class Config:
         from_attributes = True
+
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
         
