@@ -224,3 +224,10 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
+
+# get all users
+@app.get("/users", response_model=list[schemas.UserRes])
+def get_all_users(db: Session = Depends(get_db)):
+    users = db.query(models.User).all()
+    return users
+

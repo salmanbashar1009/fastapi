@@ -1,5 +1,5 @@
 
-from pydantic import BaseModel, HttpUrl, EmailStr
+from pydantic import BaseModel, ConfigDict, HttpUrl, EmailStr
 from datetime import datetime
 
 
@@ -17,8 +17,7 @@ class CourseResponse(Course):
     duration: float
     website: HttpUrl
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 
@@ -32,5 +31,7 @@ class UserRes(BaseModel):
     email: EmailStr
     created_at: datetime
 
-    class config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+    # class config:
+    #     from_attributes = True
