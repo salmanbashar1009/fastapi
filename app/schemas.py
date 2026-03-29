@@ -1,5 +1,6 @@
 
 from pydantic import BaseModel, HttpUrl, EmailStr
+from datetime import datetime
 
 
 #define request body  schema
@@ -25,3 +26,11 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
         
+
+class UserRes(BaseModel):
+    id: int
+    email: EmailStr
+    created_at: datetime
+
+    class config:
+        from_attributes = True
