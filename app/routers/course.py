@@ -53,7 +53,7 @@ def course(db:Session = Depends(get_db), current_user:models.User=Depends(oauth2
 def create_course(course:schemas.Course, db: Session = Depends(get_db),current_user:models.User=Depends(oauth2.get_current_user)):
     course_data = course.model_dump()
     course_data['website']=str(course_data['website'])
-    new_course = models.Course(**course_data)
+    new_course = models.Course(**course_data,creator_id = current_user.id)
 
     db.add(new_course)
     db.commit()

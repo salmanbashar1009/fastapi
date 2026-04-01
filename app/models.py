@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, TIMESTAMP, text
+from sqlalchemy import Column, ForeignKey, Integer, Float, String, TIMESTAMP, text
 from . database import Base
 
 class Course(Base):
@@ -8,6 +8,7 @@ class Course(Base):
     instructor = Column(String, nullable = False)
     duration = Column(Float, nullable = False)
     website = Column(String, nullable = False)
+    creator_id = Column(Integer, ForeignKey('users.id'),onupdate='CASCADE',nullable=False)
 
 
 
