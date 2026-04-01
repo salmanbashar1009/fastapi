@@ -36,7 +36,7 @@ router = APIRouter()
 
 #get course data using sqlalchemy
 @router.get('/coursealchemy', response_model=list[schemas.CourseResponse])
-def course(db:Session = Depends(get_db), get_current_user:int=Depends(oauth2.get_current_user)) :
+def course(db:Session = Depends(get_db), current_user:models.User=Depends(oauth2.get_current_user)) :
     course = db.query(models.Course).all()
     return course
 
@@ -50,7 +50,7 @@ def course(db:Session = Depends(get_db), get_current_user:int=Depends(oauth2.get
 
 #add new course using sqlalchemy
 @router.post('/course/create', response_model= schemas.CourseResponse)
-def create_course(course:schemas.Course, db: Session = Depends(get_db),get_current_user:int=Depends(oauth2.get_current_user)):
+def create_course(course:schemas.Course, db: Session = Depends(get_db),current_user:models.User=Depends(oauth2.get_current_user)):
     course_data = course.model_dump()
     course_data['website']=str(course_data['website'])
     new_course = models.Course(**course_data)
@@ -73,7 +73,7 @@ def create_course(course:schemas.Course, db: Session = Depends(get_db),get_curre
 
 #get course data by id using sqlalchemy
 @router.get("/course/{id}", response_model=schemas.CourseResponse)
-def get_course_by_id(id:int, db:Session = Depends(get_db)):
+def get_course_by_id(id:int, db:Session = Depends(get_db),current_user:models.User=Depends(oauth2.get_current_user)):
     course = db.query(models.Course).filter(models.Course.id == id).first()
     if not course:
         raise HTTPException(
@@ -99,7 +99,7 @@ def get_course_by_id(id:int, db:Session = Depends(get_db)):
 
 # delete course item using sqlalchemy
 @router.delete("/course/delete/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_course(id:int, db:Session = Depends(get_db)):
+def delete_course(id:int, db:Session = Depends(get_db),current_user:models.User=Depends(oauth2.get_current_user)):
     course = db.query(models.Course).filter(models.Course.id == id).first()
     if not course:
         raise HTTPException(
@@ -138,7 +138,7 @@ def delete_course(id:int, db:Session = Depends(get_db)):
 
 # update course using sqlalchemy
 @router.put("/course/update/{id}")
-def update_course(id:int, updated_course:schemas.Course, db:Session=Depends(get_db)):
+def update_course(id:int, updated_course:schemas.Course, db:Session=Depends(get_db),current_user:models.User=Depends(oauth2.get_current_user)):
     course_query = db.query(models.Course).filter(models.Course.id == id)
     course = course_query.first()
     if not course:
