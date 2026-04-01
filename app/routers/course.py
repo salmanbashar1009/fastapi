@@ -2,6 +2,7 @@ from fastapi import HTTPException, status, Depends, APIRouter
 from .. import models, schemas
 from sqlalchemy.orm import Session
 from ..database import get_db
+from .. import oauth2
 
 
 
@@ -35,7 +36,7 @@ router = APIRouter()
 
 #get course data using sqlalchemy
 @router.get('/coursealchemy', response_model=list[schemas.CourseResponse])
-def course(db:Session = Depends(get_db)) :
+def course(db:Session = Depends(get_db), get_current_user:int=Depends(oauth2.get_current_user)) :
     course = db.query(models.Course).all()
     return course
 
@@ -49,7 +50,7 @@ def course(db:Session = Depends(get_db)) :
 
 #add new course using sqlalchemy
 @router.post('/course/create', response_model= schemas.CourseResponse)
-def create_course(course:schemas.Course, db: Session = Depends(get_db)):
+def create_course(course:schemas.Course, db: Session = Depends(get_db),get_current_user:int=Depends(oauth2.get_current_user)):
     course_data = course.model_dump()
     course_data['website']=str(course_data['website'])
     new_course = models.Course(**course_data)
